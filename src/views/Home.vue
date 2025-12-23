@@ -14,30 +14,40 @@ const codeLines = createLines([
   { content: '<script setup lang="ts">', class: 'keyword' },
   { content: 'import { ref, onMounted } from \'vue\'', class: 'keyword' },
   '',
-  { content: 'const name = ref(\'Jordi Osarenkhoe\')', class: 'variable' },
-  { content: 'const role = ref(\'Full Stack Developer\')', class: 'variable' },
+  { content: 'const name = "Jordi Osarenkhoe"', class: 'variable' },
+  { content: 'const role = "Full Stack Developer"', class: 'variable' },
   { content: 'const skills = [', class: 'punctuation' },
   { content: '  \'Vue.js\',', class: 'string' },
   { content: '  \'Nuxt.js\',', class: 'string' },
   { content: '  \'TypeScript\',', class: 'string' },
   { content: '  \'Tailwind CSS\'', class: 'string' },
   { content: '  \'Vuetify\'', class: 'string' },
+  { content: '  \'Node JS\'', class: 'string' },
+  { content: '  \'Python\'', class: 'string' },
   { content: ']', class: 'punctuation' },
-  { content: '</.script>', class: 'keyword' },
+  { content: '</scr' + 'ipt>', class: 'keyword' },
   '',
-  { content: '<template>', class: 'keyword' },
-  { content: '  <div class="hero-section">', class: 'punctuation' },
-  { content: '    <div class="greeting">', class: 'punctuation' },
-  { content: '      Hello <span>👋</span>, I\'m', class: 'string' },
-  { content: '    </div>', class: 'punctuation' },
-  { content: '    <h1 class="name">{{ name }}</h1>', class: 'string' },
-  { content: '    <div class="tagline">', class: 'punctuation' },
-  { content: '      I Fix, Optimize & Build', class: 'string' },
-  { content: '      <span class="highlight">Nuxt.js</span> &', class: 'string' },
-  { content: '      <span class="highlight-react">Vue.js</span> Apps', class: 'string' },
-  { content: '    </div>', class: 'punctuation' },
-  { content: '  </div>', class: 'punctuation' },
-  { content: '</template>', class: 'keyword' },
+  { content: '<template>', class: '' },
+  { content: '  <div class="hero-section">', class: '' },
+  { content: '    <div class="greeting">', class: '' },
+  { content: '      Hello', class: 'string' },
+  { content: '      <span class="hand-emoji">👋</span>', class: '' },
+  { content: '      , I\'m', class: 'string' },
+  { content: '    </div>', class: '' },
+  { content: '    <h1 class="name">{{ name }}</h1>', class: '' },
+  { content: '    <div class="tagline">', class: '' },
+  { content: '      I build, optimize & fix', class: 'string' },
+  { content: '      <span class="highlight">', class: '' },
+  { content: '        Nuxt.js', class: 'string' },
+  { content: '      </span>', class: '' },
+  { content: '      &', class: 'string' },
+  { content: '      <span class="highlight-tech">', class: '' },
+  { content: '        Vue.js', class: 'string' },
+  { content: '      </span>', class: '' },
+  { content: '      Apps', class: 'string' },
+  { content: '    </div>', class: '' },
+  { content: '  </div>', class: '' },
+  { content: '</template>', class: '' },
 ])
 
 const isTyping = ref(false)
@@ -88,9 +98,9 @@ const typeWriter = () => {
         <span v-else>{{ fullText }}</span>
       </h1>
       <div class="tagline mb-4">
-        I Fix, Optimize & Build 
+        I build, optimize & fix
         <span class="highlight">Nuxt.js</span> & 
-        <span class="highlight-react">Vue.js</span> Apps
+        <span class="highlight-tech">Vue.js</span> Apps
       </div>
       
       <div class="developer-image-container">

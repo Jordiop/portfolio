@@ -19,7 +19,6 @@ const { getProjectById } = useProjects()
 const projectId = computed(() => parseInt(route.params.id as string))
 const project = computed<Project | undefined>(() => getProjectById(projectId.value))
 
-// Generate code lines based on project data
 const codeLines = computed(() => {
     if (!project.value) {
         return createLines([
@@ -64,7 +63,6 @@ const codeLines = computed(() => {
     ])
 })
 
-// Redirect to projects page if project not found
 if (!project.value) {
     router.replace('/projects')
 }

@@ -383,7 +383,7 @@ body {
   transform: scaleX(1);
 }
 
-.highlight-react {
+.highlight-tech {
   color: var(--accent-secondary);
   font-weight: 600;
 }

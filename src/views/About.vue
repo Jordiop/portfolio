@@ -19,10 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const codeLines = createLines([
-  { content: '// About.vue - Developer Profile', class: 'comment' },
   { content: '<script setup lang="ts">', class: 'keyword' },
-  { content: 'import { ref, onMounted } from \'vue\'', class: 'keyword' },
-  '',
   { content: 'const skills = [', class: 'variable' },
   { content: '  { name: "Vue.js", icon: IconVue },', class: 'string' },
   { content: '  { name: "TypeScript", icon: IconTS },', class: 'string' },
@@ -94,7 +91,7 @@ const education = [
     description: "Focused on learning the basics of big data and artificial intelligence."
   },
   {
-    degree: "CFGS Desenvolupemnt d'Aplicacions Web",
+    degree: "Web Development and Programming",
     institution: "CIFP Borja Moll",
     duration: "2021 - 2023",
     description: "Focused on learning the basics of web development and programming."

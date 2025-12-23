@@ -10,7 +10,8 @@ export interface Project {
   image: string
   github?: string
   demo?: string
-  featured: boolean
+  featured: boolean,
+  finished?: boolean
 }
 
 /**
@@ -27,25 +28,28 @@ export function useProjects() {
       image: "https://placehold.co/600x400/5e4c7f/e0def4?text=Portfolio",
       github: "https://github.com/jordiop/tab-portfolio",
       demo: "https://jordiop.com",
-      featured: true
+      featured: true,
+      finished: true
     },
     {
       id: 2,
-      title: "Advent JS",
-      description: "Collection of solved Advent of Code exercises and algorithmic challenges. Demonstrates problem-solving skills and clean code practices.",
-      tech: ["JavaScript", "Algorithms", "Data Structures"],
-      image: "https://placehold.co/600x400/5e4c7f/e0def4?text=Advent+JS",
-      github: "https://github.com/Jordiop/adventjs",
-      featured: false
-    },
-    {
-      id: 3,
       title: "Newtab Extension",
       description: "A minimalist Chrome new tab extension that provides a clean, customizable interface for productivity and quick access to frequently used tools.",
       tech: ["HTML", "CSS", "JavaScript", "Chrome API"],
       image: "https://placehold.co/600x400/5e4c7f/e0def4?text=New+Tab",
       github: "https://github.com/Jordiop/newtab",
-      featured: false
+      featured: false,
+      finished: true
+    },
+    {
+      id: 3,
+      title: "Multiplatform Weather App",
+      description: "A cross-platform weather application that delivers accurate forecasts and real-time updates, built using Flutter for a seamless experience on both iOS and Android devices.",
+      tech: ["Flutter", "Dart", "OpenWeatherMap API"],
+      image: "https://placehold.co/600x400/5e4c7f/e0def4?text=Weather+App",
+      github: "https://github.com/Jordiop/weather-app",
+      featured: false,
+      finished: false
     }
   ]
 

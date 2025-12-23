@@ -54,8 +54,7 @@ onMounted(() => {
   isDarkMode.value = savedTheme === 'dark'
   if (isDarkMode.value) document.body.classList.add('dark')
   else document.body.classList.remove('dark')
-  
-  // Load code editor visibility preference
+
   const savedCodeEditorVisible = localStorage.getItem('codeEditorVisible')
   if (savedCodeEditorVisible !== null) {
     isCodeEditorVisible.value = savedCodeEditorVisible === 'true'
@@ -73,7 +72,6 @@ onMounted(() => {
       break
   }
   
-  // Add keyboard event listener
   const handleKeydown = (event: KeyboardEvent) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
     const modifierKey = isMac ? event.metaKey : event.ctrlKey
