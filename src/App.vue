@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import IconMe from '@/components/icons/IconMe.vue'
+import CommandPalette from '@/components/CommandPalette.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -93,6 +94,7 @@ onMounted(() => {
 
 <template>
   <div id="app">
+    <CommandPalette />
     <div class="sidebar">
       <div class="sidebar-icon" @click="navigateTo('/', 'Home.vue')" :class="{ active: activeTab === 'Home.vue' }">
         <IconMe fill="currentColor" />
