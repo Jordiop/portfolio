@@ -16,11 +16,11 @@ defineProps({
   },
   height: {
     type: [String, Number],
-    default: 64
+    default: 48
   },
   width: {
     type: [String, Number],
-    default: 64
+    default: 48
   }
 });
 </script>

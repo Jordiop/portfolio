@@ -47,9 +47,20 @@ export function useProjects() {
       description: "A cross-platform weather application that delivers accurate forecasts and real-time updates, built using Flutter for a seamless experience on both iOS and Android devices.",
       tech: ["Flutter", "Dart", "OpenWeatherMap API"],
       image: "https://placehold.co/600x400/5e4c7f/e0def4?text=Weather+App",
-      github: "https://github.com/Jordiop/weather-app",
+      github: "",
       featured: false,
       finished: false
+    },
+    {
+      id: 4,
+      title: "Mood Tracker",
+      description: "A simple and intuitive mood tracking app that helps users monitor their emotional well-being over time, featuring daily logs and insightful analytics.",
+      tech: ["Vue.JS", "Laravel", "Supabase"],
+      image: "https://placehold.co/600x400/5e4c7f/e0def4?text=Mood+Tracker",
+      github: "https://github.com/Jordiop/mood-tracker",
+      featured: true,
+      finished: true,
+      demo: "https://mood.jordiop.es"
     }
   ]
 

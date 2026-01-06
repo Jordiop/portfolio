@@ -301,11 +301,4 @@ const typeWriter = () => {
     font-size: 0.9rem;
     font-weight: 500;
 }
-
-@media (max-width: 768px) {
-    .developer-image-container {
-        width: 150px;
-        height: 150px;
-    }
-}
 </style>

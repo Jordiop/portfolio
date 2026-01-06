@@ -9,6 +9,7 @@ import IconNode from '@/components/icons/IconNode.vue'
 import IconPostgreSQL from '@/components/icons/IconPostgreSQL.vue'
 import IconGit from '@/components/icons/IconGit.vue'
 import IconDocker from '@/components/icons/IconDocker.vue'
+import IconPython from '@/components/icons/IconPython.vue'
 
 interface Props {
   isCodeEditorVisible?: boolean
@@ -59,11 +60,12 @@ const skills = [
   { name: "Vue.js", icon: IconVue, color: "#42b883" },
   { name: "TypeScript", icon: IconTypeScript, color: "#3178c6" },
   { name: "Nuxt.js", icon: IconNuxt, color: "#00dc82" },
-  { name: "Tailwind CSS", icon: IconTailwind, color: "#06b6d4" },
+  { name: "Tailwind", icon: IconTailwind, color: "#06b6d4" },
   { name: "Node.js", icon: IconNode, color: "#339933" },
+  { name: "Python", icon: IconPython },
   { name: "PostgreSQL", icon: IconPostgreSQL, color: "#336791" },
   { name: "Git", icon: IconGit, color: "#f05032" },
-  { name: "Docker", icon: IconDocker, color: "#2496ed" }
+  { name: "Docker", icon: IconDocker, color: "#2496ed" },
 ];
 
 const experience = [
@@ -129,7 +131,7 @@ onMounted(() => {
         </p>
         <p class="bio">
           When I'm not coding, you can find me exploring new technologies, reading books, or watching videos.
-          I also like cars, with a big love for 90s Japanese cars.
+          One non related passion of mine is car mechanics and I'm learning myself how to restore classic cars.
         </p>
       </div>
 
