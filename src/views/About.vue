@@ -92,7 +92,7 @@ const skills = [
 
 const experience = [
     {
-        company: "Omniaccess",
+        company: "Omniaccess / Marlink",
         role: "Full Stack Developer",
         duration: "January 2025 - Present",
         description:
@@ -136,7 +136,6 @@ const education = [
 
 const isVisible = ref(false);
 
-// GitHub stats
 const {
     userStats,
     isLoading: isLoadingGithub,
@@ -149,11 +148,9 @@ onMounted(() => {
         isVisible.value = true;
     }, 100);
 
-    // Fetch GitHub stats
     fetchUserData(GITHUB_USERNAME);
 });
 
-// Track resume download
 const handleResumeDownload = () => {
     analytics.resumeDownloaded();
 };
@@ -218,7 +215,6 @@ const handleResumeDownload = () => {
                 </div>
             </div>
 
-            <!-- GitHub Stats Section -->
             <div class="github-stats-section">
                 <div class="section-header">
                     <h2>GitHub Statistics</h2>

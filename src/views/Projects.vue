@@ -47,8 +47,12 @@ const codeLines = createLines([
     { content: "            {{ tech }}", class: "" },
     { content: "          </span>", class: "punctuation" },
     { content: "        </div>", class: "punctuation" },
-    { content: '        <a :href="project.github">Code</a>', class: "" },
-    { content: '        <a :href="project.demo">Live Demo</a>', class: "" },
+    { content: '        <a :href="project.github">', class: "" },
+    { content: "          Code", class: "string" },
+    { content: "        </a>", class: "punctuation" },
+    { content: '        <a :href="project.demo">', class: "" },
+    { content: "          Live Demo", class: "string" },
+    { content: "        </a>", class: "punctuation" },
     { content: "      </div>", class: "punctuation" },
     { content: "    </div>", class: "punctuation" },
     { content: "  </div>", class: "punctuation" },
@@ -161,6 +165,7 @@ function isProjectRepoLoading(githubUrl: string | undefined): boolean {
                             :forks="getProjectRepoStats(project.github)!.forks"
                             :updatedAt="getProjectRepoStats(project.github)!.updatedAt"
                             :isLoading="isProjectRepoLoading(project.github)"
+                            class="mb-3"
                         />
 
                         <div class="tech-tags">

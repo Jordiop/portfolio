@@ -113,7 +113,6 @@ if (!project.value) {
             class="preview"
             :class="{ 'full-width': !props.isCodeEditorVisible }"
         >
-            <!-- Floating Back Button -->
             <button
                 @click="router.push('/projects')"
                 class="back-button-floating"
@@ -135,7 +134,6 @@ if (!project.value) {
             </button>
 
             <div class="project-details-page">
-                <!-- Project Header -->
                 <div class="project-header">
                     <div class="project-badge-container">
                         <span
@@ -160,7 +158,6 @@ if (!project.value) {
                     <p class="project-description">{{ project.description }}</p>
                 </div>
 
-                <!-- Project Image -->
                 <div class="project-image-container">
                     <img
                         :src="project.image"
@@ -169,7 +166,6 @@ if (!project.value) {
                     />
                 </div>
 
-                <!-- Tech Stack -->
                 <div class="tech-section">
                     <h2 class="section-title">Technologies</h2>
                     <div class="tech-grid">
@@ -183,7 +179,6 @@ if (!project.value) {
                     </div>
                 </div>
 
-                <!-- Project Links -->
                 <div class="project-actions">
                     <a
                         v-if="project.github"
