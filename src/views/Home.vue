@@ -17,28 +17,40 @@ const codeLines = createLines([
     { content: "      Hello 👋, I'm", class: "string" },
     { content: "    </div>", class: "" },
     { content: '    <h1 class="name">', class: "" },
-    { content: "      Jordi Osarenkhoe", class: "string" },
+    { content: '      <span v-if="isTyping">', class: "" },
+    { content: "        {{ typedText }}<span class=\"cursor\">|</span>", class: "string" },
+    { content: "      </span>", class: "" },
+    { content: "      <span v-else>{{ fullText }}</span>", class: "" },
     { content: "    </h1>", class: "" },
-    { content: '    <div class="tagline">', class: "" },
+    { content: '    <div class="tagline mb-4">', class: "" },
     { content: "      I build, optimize & fix", class: "string" },
-    { content: '      <span class="highlight">Nuxt.js</span>', class: "" },
-    { content: "      & <span>Vue.js</span> Apps", class: "string" },
+    { content: '      <span class="highlight">Nuxt.js</span> &', class: "" },
+    { content: '      <span class="highlight-tech">Vue.js</span> Apps', class: "" },
     { content: "    </div>", class: "" },
     "",
-    { content: '    <div class="developer-image">', class: "" },
-    { content: '      <img src="meirl.jpg" />', class: "" },
+    { content: '    <div class="developer-image-container">', class: "" },
+    { content: '      <img src="@/assets/images/meirl.jpg"', class: "" },
+    { content: '        alt="Jordi Osarenkhoe"', class: "string" },
+    { content: '        class="developer-img" />', class: "" },
     { content: "    </div>", class: "" },
     "",
     { content: '    <div class="social-links">', class: "" },
     { content: "      <h4>Connect with me</h4>", class: "" },
-    { content: '      <a href="linkedin">LinkedIn</a>', class: "" },
-    { content: '      <a href="github">GitHub</a>', class: "" },
-    { content: '      <a href="twitter">Twitter</a>', class: "" },
+    { content: '      <a href="https://www.linkedin.com/in/jordiop/"', class: "" },
+    { content: '        target="_blank">LinkedIn</a>', class: "" },
+    { content: '      <a href="https://github.com/jordiop"', class: "" },
+    { content: '        target="_blank">GitHub</a>', class: "" },
+    { content: '      <a href="https://twitter.com/jordiscript"', class: "" },
+    { content: '        target="_blank">Twitter</a>', class: "" },
     { content: "    </div>", class: "" },
     "",
     { content: '    <div class="buttons">', class: "" },
-    { content: "      <button>See My Work</button>", class: "" },
-    { content: "      <button>Get In Touch</button>", class: "" },
+    { content: '      <button class="btn btn-primary"', class: "" },
+    { content: "        @click=\"$router.push('/projects')\">", class: "" },
+    { content: "        See My Work", class: "string" },
+    { content: "      </button>", class: "" },
+    { content: '      <a href="mailto:jordiosarenkhoe@outlook.es"', class: "" },
+    { content: '        class="btn">Get In Touch</a>', class: "" },
     { content: "    </div>", class: "" },
     { content: "  </div>", class: "" },
     { content: "</template>", class: "" },
@@ -269,6 +281,12 @@ const typeWriter = () => {
     box-shadow: var(--shadow-medium);
     transition: all 0.3s ease;
     margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .developer-image-container {
+        align-self: center;
+    }
 }
 
 .developer-image-container:hover {

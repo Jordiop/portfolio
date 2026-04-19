@@ -33,7 +33,6 @@
   --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.2);
 
   color: var(--text-primary);
-  background-color: var(--bg-primary);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -75,6 +74,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   color: var(--text-primary);
+  background-color: var(--bg-primary);
   transition: color 0.3s ease, background-color 0.3s ease;
   overflow-x: hidden;
 }
