@@ -30,7 +30,7 @@ const codeLines = computed(() => {
 
     const p = project.value;
     return createLines([
-        { content: '<script setup lang="ts">', class: "keyword" },
+        { content: '<' + 'script setup lang="ts">', class: "keyword" },
         { content: "import { useRoute } from 'vue-router'", class: "keyword" },
         {
             content: "import { useProjects } from '@/composables/useProjects'",
@@ -60,11 +60,11 @@ const codeLines = computed(() => {
         { content: `  demo: "${p.demo || "N/A"}",`, class: "string" },
         { content: `  featured: ${p.featured},`, class: "boolean" },
         { content: "}", class: "punctuation" },
-        { content: "</script>", class: "keyword" },
+        { content: "</" + "script>", class: "keyword" },
         "",
         { content: "<template>", class: "keyword" },
         { content: '  <div class="project-details-page">', class: "punctuation" },
-        { content: '    <button @click="router.push(\'/projects\')"', class: "" },
+        { content: '    <button @click="router.push(\'/projects\')"', class: "punctuation" },
         { content: '      class="back-button-floating">', class: "" },
         { content: "      Back to Projects", class: "string" },
         { content: "    </button>", class: "punctuation" },
