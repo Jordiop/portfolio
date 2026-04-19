@@ -3,6 +3,7 @@ import HomeView from '../views/Home.vue'
 import AboutView from '../views/About.vue'
 import ProjectsView from '../views/Projects.vue'
 import ProjectView from '../views/Project.vue'
+import GalleryView from '../views/Gallery.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,11 @@ const router = createRouter({
       name: 'project',
       component: ProjectView,
       props: true,
+    },
+    {
+      path: '/gallery',
+      name: 'gallery',
+      component: GalleryView,
     },
   ],
 })

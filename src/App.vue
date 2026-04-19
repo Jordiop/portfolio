@@ -47,6 +47,9 @@ watch(() => route.path, (newPath) => {
     case '/about':
       activeTab.value = 'About.vue'
       break
+    case '/gallery':
+      activeTab.value = 'Gallery.vue'
+      break
   }
 })
 
@@ -71,8 +74,11 @@ onMounted(() => {
     case '/about':
       activeTab.value = 'About.vue'
       break
+    case '/gallery':
+      activeTab.value = 'Gallery.vue'
+      break
   }
-  
+
   const handleKeydown = (event: KeyboardEvent) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
     const modifierKey = isMac ? event.metaKey : event.ctrlKey
@@ -107,6 +113,9 @@ onMounted(() => {
       </div>
       <div class="sidebar-icon" @click="navigateTo('/about', 'About.vue')" :class="{ active: activeTab === 'About.vue' }">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
+      </div>
+      <div class="sidebar-icon" @click="navigateTo('/gallery', 'Gallery.vue')" :class="{ active: activeTab === 'Gallery.vue' }">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
       </div>
       <div class="sidebar-icon" @click="toggleTheme">
         <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -153,8 +162,8 @@ onMounted(() => {
           </svg>
           Projects.vue
         </div>
-        <div 
-          class="tab" 
+        <div
+          class="tab"
           :class="{ active: activeTab === 'About.vue' }"
           @click="navigateTo('/about', 'About.vue')"
         >
@@ -164,6 +173,18 @@ onMounted(() => {
             <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
           </svg>
           About.vue
+        </div>
+        <div
+          class="tab"
+          :class="{ active: activeTab === 'Gallery.vue' }"
+          @click="navigateTo('/gallery', 'Gallery.vue')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          Gallery.vue
         </div>
       </div>
       <div class="content-area">

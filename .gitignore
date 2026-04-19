@@ -30,3 +30,5 @@ coverage
 *.tsbuildinfo
 
 nul
+.env
+.env.development
