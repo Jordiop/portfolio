@@ -50,6 +50,9 @@ watch(() => route.path, (newPath) => {
     case '/gallery':
       activeTab.value = 'Gallery.vue'
       break
+    case '/music':
+      activeTab.value = 'Music.vue'
+      break
   }
 })
 
@@ -76,6 +79,9 @@ onMounted(() => {
       break
     case '/gallery':
       activeTab.value = 'Gallery.vue'
+      break
+    case '/music':
+      activeTab.value = 'Music.vue'
       break
   }
 
@@ -117,6 +123,9 @@ onMounted(() => {
       <div class="sidebar-icon" @click="navigateTo('/gallery', 'Gallery.vue')" :class="{ active: activeTab === 'Gallery.vue' }">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
       </div>
+      <div class="sidebar-icon" @click="navigateTo('/music', 'Music.vue')" :class="{ active: activeTab === 'Music.vue' }">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+      </div>
       <div class="sidebar-icon" @click="toggleTheme">
         <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5"></circle>
@@ -133,7 +142,7 @@ onMounted(() => {
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
       </div>
-      <div class="sidebar-icon" @click="toggleCodeEditor" :class="{ 'active': !isCodeEditorVisible }" :title="isCodeEditorVisible ? 'Hide Code Editor (Cmd+B)' : 'Show Code Editor (Cmd+B)'">
+      <div class="sidebar-icon toggle-editor-btn" @click="toggleCodeEditor" :class="{ 'active': !isCodeEditorVisible }" :title="isCodeEditorVisible ? 'Hide Code Editor (Cmd+B)' : 'Show Code Editor (Cmd+B)'">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
         </svg>
@@ -185,6 +194,18 @@ onMounted(() => {
             <polyline points="21 15 16 10 5 21"></polyline>
           </svg>
           Gallery.vue
+        </div>
+        <div
+          class="tab"
+          :class="{ active: activeTab === 'Music.vue' }"
+          @click="navigateTo('/music', 'Music.vue')"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+          Music.vue
         </div>
       </div>
       <div class="content-area">
@@ -266,6 +287,14 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .tab svg {
+    display: none;
+  }
+
+  .tab-bar {
+    display: none;
+  }
+
+  .toggle-editor-btn {
     display: none;
   }
 }

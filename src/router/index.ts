@@ -4,6 +4,7 @@ import AboutView from '../views/About.vue'
 import ProjectsView from '../views/Projects.vue'
 import ProjectView from '../views/Project.vue'
 import GalleryView from '../views/Gallery.vue'
+import MusicView from '../views/Music.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +34,11 @@ const router = createRouter({
       path: '/gallery',
       name: 'gallery',
       component: GalleryView,
+    },
+    {
+      path: '/music',
+      name: 'music',
+      component: MusicView,
     },
   ],
 })
