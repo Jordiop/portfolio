@@ -148,6 +148,30 @@ onMounted(() => {
         </svg>
       </div>
     </div>
+    <!-- Floating mobile nav (iOS 26 liquid glass) -->
+    <nav class="mobile-nav">
+      <div class="mobile-nav-item" :class="{ active: activeTab === 'Home.vue' }" @click="navigateTo('/', 'Home.vue')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      </div>
+      <div class="mobile-nav-item" :class="{ active: activeTab === 'Projects.vue' }" @click="navigateTo('/projects', 'Projects.vue')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
+      </div>
+      <div class="mobile-nav-item" :class="{ active: activeTab === 'About.vue' }" @click="navigateTo('/about', 'About.vue')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
+      </div>
+      <div class="mobile-nav-item" :class="{ active: activeTab === 'Gallery.vue' }" @click="navigateTo('/gallery', 'Gallery.vue')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+      </div>
+      <div class="mobile-nav-item" :class="{ active: activeTab === 'Music.vue' }" @click="navigateTo('/music', 'Music.vue')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+      </div>
+      <div class="mobile-nav-divider"></div>
+      <div class="mobile-nav-item" @click="toggleTheme">
+        <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </div>
+    </nav>
+
     <div class="main-content">
       <div class="tab-bar">
         <div 
@@ -285,6 +309,61 @@ onMounted(() => {
   opacity: 1;
 }
 
+/* ── Mobile floating nav ── */
+.mobile-nav {
+  display: none;
+}
+
+.mobile-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--icon-color);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mobile-nav-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent-color);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mobile-nav-item.active {
+  color: var(--accent-color);
+}
+
+.mobile-nav-item.active::before {
+  opacity: 0.13;
+  transform: scale(1);
+}
+
+.mobile-nav-item:active {
+  transform: scale(0.88);
+}
+
+.mobile-nav-item svg {
+  position: relative;
+  z-index: 1;
+}
+
+.mobile-nav-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+  margin: 0 2px;
+  opacity: 0.8;
+}
+
 @media (max-width: 768px) {
   .tab svg {
     display: none;
@@ -296,6 +375,46 @@ onMounted(() => {
 
   .toggle-editor-btn {
     display: none;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 8px 12px;
+    border-radius: 32px;
+
+    /* Liquid glass */
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.10),
+      0 2px 8px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  .dark .mobile-nav {
+    background: rgba(18, 16, 28, 0.72);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  :deep(.preview) {
+    padding-bottom: 96px;
   }
 }
 </style>
