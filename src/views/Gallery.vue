@@ -176,6 +176,7 @@ const codeLines = createLines([
                     v-for="(photo, i) in photos"
                     :key="photo.key"
                     class="gallery-item"
+                    :class="{ 'img-loading': !imgLoaded[i] }"
                     @click="openLightbox(i)"
                     role="button"
                     tabindex="0"
@@ -337,24 +338,42 @@ const codeLines = createLines([
     text-transform: capitalize;
 }
 
+/* Shimmer */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.gallery-item.img-loading {
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 25%,
+        color-mix(in srgb, var(--bg-secondary) 60%, var(--text-primary) 40%) 50%,
+        var(--bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+}
+
 /* Skeleton */
 .gallery-skeleton {
     break-inside: avoid;
     margin-bottom: 1rem;
     border-radius: 10px;
-    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     height: 180px;
-    animation: skeleton-pulse 1.5s ease infinite;
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 25%,
+        color-mix(in srgb, var(--bg-secondary) 60%, var(--text-primary) 40%) 50%,
+        var(--bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
 }
 
 .gallery-skeleton:nth-child(odd) { height: 220px; }
 .gallery-skeleton:nth-child(3n) { height: 160px; }
-
-@keyframes skeleton-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
 
 /* Error / Empty */
 .gallery-error,
