@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue'
 import { createLines } from '@/composables/createLines'
 import { useMusic, type Album } from '@/composables/useMusic'
+import NowPlaying from '@/components/NowPlaying.vue'
 
 interface Props {
   isCodeEditorVisible?: boolean
@@ -125,6 +126,8 @@ const codeLines = createLines([
         <h2>Favourite Albums</h2>
         <p class="music-subtitle">Records that live rent-free in my head</p>
       </div>
+
+      <NowPlaying />
 
       <div class="album-grid">
         <div
