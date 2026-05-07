@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useSeoMeta } from '@unhead/vue'
 import { createLines } from '@/composables/createLines'
 import { useGallery, type ExifData } from '@/composables/useGallery'
+import { useSiteMeta } from '@/composables/useSiteMeta'
 
 interface Props {
     isCodeEditorVisible?: boolean
@@ -10,6 +12,14 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     isCodeEditorVisible: true,
 })
+
+useSeoMeta(
+    useSiteMeta({
+        title: 'Gallery',
+        description: 'A selection of photos from places I have been, with EXIF metadata.',
+        path: '/gallery',
+    }),
+)
 
 const { photos, isLoading, error, fetchPhotos, fetchExif, getExif } = useGallery()
 

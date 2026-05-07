@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useSeoMeta } from '@unhead/vue'
 import { createLines } from '@/composables/createLines'
 import { useMusic, type Album } from '@/composables/useMusic'
+import { useSiteMeta } from '@/composables/useSiteMeta'
 import NowPlaying from '@/components/NowPlaying.vue'
 
 interface Props {
   isCodeEditorVisible?: boolean
 }
 const props = withDefaults(defineProps<Props>(), { isCodeEditorVisible: true })
+
+useSeoMeta(
+  useSiteMeta({
+    title: 'Music',
+    description: 'Albums on rotation and what I am listening to right now via Spotify.',
+    path: '/music',
+  }),
+)
 
 const { albums } = useMusic()
 

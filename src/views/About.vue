@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useSeoMeta } from "@unhead/vue";
 import { createLines } from "@/composables/createLines";
+import { useSiteMeta } from "@/composables/useSiteMeta";
 import { analytics } from "@/config/analytics";
+
+useSeoMeta(
+    useSiteMeta({
+        title: "About",
+        description:
+            "Full Stack Developer working with Vue.js, TypeScript, Nuxt, and modern web technologies. Bio, skills, experience, and resume.",
+        path: "/about",
+    }),
+);
 import { useGithubUser } from "@/composables/useGithubUser";
 import { GITHUB_USERNAME } from "@/config/github";
 import GitHubStatsCard from "@/components/GitHubStatsCard.vue";

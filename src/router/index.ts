@@ -40,6 +40,11 @@ const router = createRouter({
       name: 'music',
       component: MusicView,
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFound.vue'),
+    },
   ],
 })
 

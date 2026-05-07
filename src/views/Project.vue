@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useHead } from "@unhead/vue";
 import { useProjects, type Project } from "@/composables/useProjects";
+import { useSiteMeta } from "@/composables/useSiteMeta";
 import { createLines } from "@/composables/createLines";
 
 interface Props {
@@ -20,6 +22,34 @@ const projectId = computed(() => parseInt(route.params.id as string));
 const project = computed<Project | undefined>(() =>
     getProjectById(projectId.value),
 );
+
+useHead(() => {
+    const meta = useSiteMeta(
+        project.value
+            ? {
+                  title: project.value.title,
+                  description: project.value.description,
+                  image: project.value.image,
+                  path: `/projects/${project.value.id}`,
+              }
+            : {},
+    );
+    return {
+        title: meta.title,
+        meta: [
+            { name: "description", content: meta.description },
+            { property: "og:title", content: meta.ogTitle },
+            { property: "og:description", content: meta.ogDescription },
+            { property: "og:image", content: meta.ogImage },
+            { property: "og:url", content: meta.ogUrl },
+            { property: "og:type", content: meta.ogType },
+            { name: "twitter:card", content: meta.twitterCard },
+            { name: "twitter:title", content: meta.twitterTitle },
+            { name: "twitter:description", content: meta.twitterDescription },
+            { name: "twitter:image", content: meta.twitterImage },
+        ],
+    };
+});
 
 const codeLines = computed(() => {
     if (!project.value) {
@@ -100,9 +130,11 @@ const codeLines = computed(() => {
     ]);
 });
 
-if (!project.value) {
-    router.replace("/projects");
-}
+watchEffect(() => {
+    if (!Number.isFinite(projectId.value) || !project.value) {
+        router.replace({ name: "not-found" });
+    }
+});
 </script>
 
 <template>
@@ -171,6 +203,23 @@ if (!project.value) {
                     </div>
                     <h1 class="project-title">{{ project.title }}</h1>
                     <p class="project-description">{{ project.description }}</p>
+                    <div
+                        v-if="project.role || project.durationLabel || project.year"
+                        class="project-meta-strip"
+                    >
+                        <span v-if="project.role" class="meta-chip">
+                            <span class="meta-label">Role</span>
+                            {{ project.role }}
+                        </span>
+                        <span v-if="project.durationLabel" class="meta-chip">
+                            <span class="meta-label">Duration</span>
+                            {{ project.durationLabel }}
+                        </span>
+                        <span v-if="project.year" class="meta-chip">
+                            <span class="meta-label">Year</span>
+                            {{ project.year }}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="project-image-container">
@@ -193,6 +242,74 @@ if (!project.value) {
                         </span>
                     </div>
                 </div>
+
+                <div
+                    v-if="project.metrics && project.metrics.length"
+                    class="metrics-section"
+                >
+                    <div class="metrics-grid">
+                        <div
+                            v-for="(metric, index) in project.metrics"
+                            :key="index"
+                            class="metric-card"
+                        >
+                            <div class="metric-value">{{ metric.value }}</div>
+                            <div class="metric-label">{{ metric.label }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <section v-if="project.problem" class="case-section">
+                    <h2 class="section-title">The problem</h2>
+                    <p class="case-prose">{{ project.problem }}</p>
+                </section>
+
+                <section v-if="project.approach" class="case-section">
+                    <h2 class="section-title">My approach</h2>
+                    <p class="case-prose">{{ project.approach }}</p>
+                </section>
+
+                <section v-if="project.outcome" class="case-section">
+                    <h2 class="section-title">Outcome</h2>
+                    <p class="case-prose">{{ project.outcome }}</p>
+                </section>
+
+                <section
+                    v-if="project.screenshots && project.screenshots.length"
+                    class="case-section"
+                >
+                    <h2 class="section-title">Screenshots</h2>
+                    <figure
+                        v-for="(shot, index) in project.screenshots"
+                        :key="index"
+                        class="screenshot-figure"
+                    >
+                        <img
+                            :src="shot.src"
+                            :alt="shot.alt"
+                            class="screenshot-image"
+                            loading="lazy"
+                        />
+                        <figcaption v-if="shot.caption" class="screenshot-caption">
+                            {{ shot.caption }}
+                        </figcaption>
+                    </figure>
+                </section>
+
+                <section
+                    v-if="project.learnings && project.learnings.length"
+                    class="case-section"
+                >
+                    <h2 class="section-title">What I learned</h2>
+                    <ul class="learnings-list">
+                        <li
+                            v-for="(item, index) in project.learnings"
+                            :key="index"
+                        >
+                            {{ item }}
+                        </li>
+                    </ul>
+                </section>
 
                 <div class="project-actions">
                     <a
@@ -364,6 +481,127 @@ if (!project.value) {
     color: var(--text-secondary);
     max-width: 400px;
     margin: 0 auto;
+}
+
+.project-meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+}
+
+.meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.meta-chip .meta-label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.metrics-section {
+    margin: 3rem 0;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.metric-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(
+        135deg,
+        var(--accent-color),
+        var(--accent-secondary)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.case-section {
+    margin: 3rem 0;
+}
+
+.case-prose {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    max-width: 65ch;
+    margin: 0;
+    white-space: pre-line;
+}
+
+.screenshot-figure {
+    margin: 1.5rem 0 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-medium);
+    background: var(--bg-secondary);
+}
+
+.screenshot-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.screenshot-caption {
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.learnings-list {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    padding-left: 1.25rem;
+    margin: 0;
+    max-width: 65ch;
+}
+
+.learnings-list li {
+    margin-bottom: 0.75rem;
 }
 
 .project-image-container {

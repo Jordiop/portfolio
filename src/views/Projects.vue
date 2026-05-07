@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useSeoMeta } from "@unhead/vue";
 import { createLines } from "@/composables/createLines";
 import { useProjects } from "@/composables/useProjects";
+import { useSiteMeta } from "@/composables/useSiteMeta";
 import { useGithubRepo } from "@/composables/useGithubRepo";
 import { parseGithubUrl } from "@/config/github";
 import GitHubRepoBadge from "@/components/GitHubRepoBadge.vue";
@@ -14,6 +16,15 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     isCodeEditorVisible: true,
 });
+
+useSeoMeta(
+    useSiteMeta({
+        title: "Projects",
+        description:
+            "Selected work — Vue, TypeScript, Flutter, and full-stack projects. Case studies, source code, and live demos.",
+        path: "/projects",
+    }),
+);
 
 const router = useRouter();
 const { getAllProjects } = useProjects();

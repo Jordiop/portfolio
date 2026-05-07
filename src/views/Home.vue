@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useSeoMeta } from "@unhead/vue";
 import { createLines } from "@/composables/createLines";
+import { useSiteMeta } from "@/composables/useSiteMeta";
 
 interface Props {
     isCodeEditorVisible?: boolean;
@@ -9,6 +11,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     isCodeEditorVisible: true,
 });
+
+useSeoMeta(useSiteMeta({ path: "/" }));
 
 const codeLines = createLines([
     { content: "<template>", class: "" },
