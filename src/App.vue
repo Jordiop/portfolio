@@ -241,9 +241,7 @@ onMounted(() => {
           </div>
         </div>
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" :key="route.path" :isCodeEditorVisible="isCodeEditorVisible" />
-          </transition>
+          <component :is="Component" :key="route.path" :isCodeEditorVisible="isCodeEditorVisible" />
         </router-view>
       </div>
     </div>
