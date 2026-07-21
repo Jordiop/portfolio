@@ -1,420 +1,945 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import IconMe from '@/components/icons/IconMe.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
+import MenuBar from '@/components/MenuBar.vue'
+import TerminalPanel from '@/components/TerminalPanel.vue'
+import NotificationToasts from '@/components/NotificationToasts.vue'
+import ScmPanel from '@/components/panels/ScmPanel.vue'
+import ExtensionsPanel from '@/components/panels/ExtensionsPanel.vue'
+import RunDebugPanel from '@/components/panels/RunDebugPanel.vue'
+import {
+  useWorkbench,
+  files,
+  fileForPath,
+  type EditorFile,
+  type SideBarView,
+} from '@/composables/useWorkbench'
 
 const router = useRouter()
 const route = useRoute()
-const activeTab = ref('Home.vue')
-const isDarkMode = ref(false)
+
+const {
+  isDarkMode,
+  isExplorerVisible,
+  isCodeEditorVisible,
+  isTerminalVisible,
+  activeView,
+  toggleTheme,
+  toggleExplorer,
+  toggleCodeEditor,
+  toggleTerminal,
+  showSideBarView,
+  notify,
+  restoreWorkbench,
+  openPalette,
+} = useWorkbench()
+
+// Open editor tabs (start with Home + whatever route we land on)
+const openTabs = ref<EditorFile[]>([files[0]])
+
 const isLoading = ref(true)
-const isCodeEditorVisible = ref(true)
+const portfolioExpanded = ref(true)
+const menuBar = ref<InstanceType<typeof MenuBar> | null>(null)
+const terminal = ref<InstanceType<typeof TerminalPanel> | null>(null)
 
-const navigateTo = (path: string, tab: string) => {
-  if (route.path !== path) {
-    router.push(path)
-    activeTab.value = tab
+const activeFile = computed(() => fileForPath(route.path))
+const activeTab = computed(() => activeFile.value.name)
+
+const sideBarTitle = computed(
+  () =>
+    ({
+      explorer: 'Explorer',
+      search: 'Search',
+      scm: 'Source Control',
+      run: 'Run and Debug',
+      ext: 'Extensions',
+    })[activeView.value],
+)
+
+const ensureTab = (file: EditorFile) => {
+  if (!openTabs.value.some((t) => t.path === file.path)) {
+    openTabs.value.push(file)
+  }
+}
+
+const openFile = (file: EditorFile) => {
+  ensureTab(file)
+  if (route.path !== file.path) router.push(file.path)
+}
+
+const closeTab = (file: EditorFile, e?: Event) => {
+  e?.stopPropagation()
+  if (openTabs.value.length === 1) return // keep at least one open
+  const idx = openTabs.value.findIndex((t) => t.path === file.path)
+  if (idx === -1) return
+  const wasActive = route.path === file.path
+  openTabs.value.splice(idx, 1)
+  if (wasActive) {
+    const next = openTabs.value[Math.max(0, idx - 1)]
+    router.push(next.path)
+  }
+}
+
+const selectActivity = (view: SideBarView) => {
+  if (view === 'search') {
+    openPalette('files')
+    return
+  }
+  if (activeView.value === view && isExplorerVisible.value) {
+    isExplorerVisible.value = false
   } else {
-    activeTab.value = tab
+    showSideBarView(view)
   }
 }
 
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value
-  if (isDarkMode.value) {
-    document.body.classList.add('dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.body.classList.remove('dark')
-    localStorage.setItem('theme', 'light')
+/** Menu bar "Run Task: …" entries execute inside the terminal. */
+const runInTerminal = (command: string) => terminal.value?.execute(command)
+
+const windowTitle = computed(() => `${activeTab.value} — portfolio — Visual Studio Code`)
+
+// Status bar — feels alive without faking interactivity
+const cursorPos = ref({ ln: 1, col: 1 })
+
+watch(
+  () => route.path,
+  () => {
+    ensureTab(activeFile.value)
+    cursorPos.value = {
+      ln: 1 + Math.floor(Math.random() * 40),
+      col: 1 + Math.floor(Math.random() * 20),
+    }
+    menuBar.value?.closeMenu()
+  },
+)
+
+const handleKeydown = (event: KeyboardEvent) => {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+  const mod = isMac ? event.metaKey : event.ctrlKey
+  if (!mod) return
+
+  if (event.key.toLowerCase() === 'b') {
+    event.preventDefault()
+    toggleExplorer()
+  }
+  if (event.key === '\\') {
+    event.preventDefault()
+    toggleCodeEditor()
+  }
+  if (event.key === '`') {
+    event.preventDefault()
+    toggleTerminal()
   }
 }
-
-const toggleCodeEditor = () => {
-  isCodeEditorVisible.value = !isCodeEditorVisible.value
-  localStorage.setItem('codeEditorVisible', isCodeEditorVisible.value.toString())
-}
-
-watch(() => route.path, (newPath) => {
-  switch (newPath) {
-    case '/':
-      activeTab.value = 'Home.vue'
-      break
-    case '/projects':
-      activeTab.value = 'Projects.vue'
-      break
-    case '/about':
-      activeTab.value = 'About.vue'
-      break
-    case '/gallery':
-      activeTab.value = 'Gallery.vue'
-      break
-    case '/music':
-      activeTab.value = 'Music.vue'
-      break
-  }
-})
 
 onMounted(() => {
-  const savedTheme = localStorage.getItem('theme')
-  isDarkMode.value = savedTheme === 'dark'
-  if (isDarkMode.value) document.body.classList.add('dark')
-  else document.body.classList.remove('dark')
+  restoreWorkbench()
+  ensureTab(activeFile.value)
 
-  const savedCodeEditorVisible = localStorage.getItem('codeEditorVisible')
-  if (savedCodeEditorVisible !== null) {
-    isCodeEditorVisible.value = savedCodeEditorVisible === 'true'
-  }
-  
-  switch (route.path) {
-    case '/':
-      activeTab.value = 'Home.vue'
-      break
-    case '/projects':
-      activeTab.value = 'Projects.vue'
-      break
-    case '/about':
-      activeTab.value = 'About.vue'
-      break
-    case '/gallery':
-      activeTab.value = 'Gallery.vue'
-      break
-    case '/music':
-      activeTab.value = 'Music.vue'
-      break
-  }
-
-  const handleKeydown = (event: KeyboardEvent) => {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
-    const modifierKey = isMac ? event.metaKey : event.ctrlKey
-    
-    if (modifierKey && event.key === 'b') {
-      event.preventDefault()
-      toggleCodeEditor()
-    }
-  }
-  
   document.addEventListener('keydown', handleKeydown)
-  
-  setTimeout(() => {
-    isLoading.value = false
-  }, 300)
+  setTimeout(() => (isLoading.value = false), 300)
+
+  // The greeting VS Code shows once an extension host finishes booting.
+  setTimeout(
+    () =>
+      notify(
+        'Vue Language Features activated',
+        'Press F1 for commands, Ctrl+` for a terminal.',
+      ),
+    1400,
+  )
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
-
 
 <template>
   <div id="app">
     <CommandPalette />
-    <div class="sidebar">
-      <div class="sidebar-icon" @click="navigateTo('/', 'Home.vue')" :class="{ active: activeTab === 'Home.vue' }">
-        <IconMe fill="currentColor" />
+    <NotificationToasts />
+
+    <!-- ════════ Title Bar ════════ -->
+    <div class="title-bar" @click="menuBar?.closeMenu()">
+      <div class="title-left">
+        <div class="vscode-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path
+              fill="#0098ff"
+              d="M17.5 2.5 8 11l-4-3.2-1.6.8 3.5 3.4-3.5 3.4 1.6.8 4-3.2 9.5 8.5 2.5-1.1V3.6L17.5 2.5ZM17 7.6v8.8L11.2 12 17 7.6Z"
+            />
+          </svg>
+        </div>
+        <MenuBar ref="menuBar" @run-command="runInTerminal" />
       </div>
-      <div class="sidebar-icon" @click="navigateTo('/', 'Home.vue')" :class="{ active: activeTab === 'Home.vue' }">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-      </div>
-      <div class="sidebar-icon" @click="navigateTo('/projects', 'Projects.vue')" :class="{ active: activeTab === 'Projects.vue' }">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
-      </div>
-      <div class="sidebar-icon" @click="navigateTo('/about', 'About.vue')" :class="{ active: activeTab === 'About.vue' }">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
-      </div>
-      <div class="sidebar-icon" @click="navigateTo('/gallery', 'Gallery.vue')" :class="{ active: activeTab === 'Gallery.vue' }">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-      </div>
-      <div class="sidebar-icon" @click="navigateTo('/music', 'Music.vue')" :class="{ active: activeTab === 'Music.vue' }">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-      </div>
-      <div class="sidebar-icon" @click="toggleTheme">
-        <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-        </svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-        </svg>
-      </div>
-      <div class="sidebar-icon toggle-editor-btn" @click="toggleCodeEditor" :class="{ 'active': !isCodeEditorVisible }" :title="isCodeEditorVisible ? 'Hide Code Editor (Cmd+B)' : 'Show Code Editor (Cmd+B)'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-        </svg>
+
+      <div class="title-center">{{ windowTitle }}</div>
+
+      <div class="window-controls" @click.stop>
+        <button class="win-btn" aria-label="Minimize">
+          <svg width="11" height="11" viewBox="0 0 11 11"><rect x="0" y="5" width="11" height="1" fill="currentColor" /></svg>
+        </button>
+        <button class="win-btn" aria-label="Maximize">
+          <svg width="11" height="11" viewBox="0 0 11 11"><rect x="0.5" y="0.5" width="10" height="10" fill="none" stroke="currentColor" /></svg>
+        </button>
+        <button class="win-btn win-close" aria-label="Close">
+          <svg width="11" height="11" viewBox="0 0 11 11"><path d="M1 1l9 9M10 1l-9 9" stroke="currentColor" stroke-width="1" /></svg>
+        </button>
       </div>
     </div>
-    <!-- Floating mobile nav (iOS 26 liquid glass) -->
-    <nav class="mobile-nav">
-      <div class="mobile-nav-item" :class="{ active: activeTab === 'Home.vue' }" @click="navigateTo('/', 'Home.vue')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-      </div>
-      <div class="mobile-nav-item" :class="{ active: activeTab === 'Projects.vue' }" @click="navigateTo('/projects', 'Projects.vue')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>
-      </div>
-      <div class="mobile-nav-item" :class="{ active: activeTab === 'About.vue' }" @click="navigateTo('/about', 'About.vue')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
-      </div>
-      <div class="mobile-nav-item" :class="{ active: activeTab === 'Gallery.vue' }" @click="navigateTo('/gallery', 'Gallery.vue')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-      </div>
-      <div class="mobile-nav-item" :class="{ active: activeTab === 'Music.vue' }" @click="navigateTo('/music', 'Music.vue')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-      </div>
-      <div class="mobile-nav-divider"></div>
-      <div class="mobile-nav-item" @click="toggleTheme">
-        <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-      </div>
-    </nav>
 
-    <div class="main-content">
-      <div class="tab-bar">
-        <div 
-          class="tab" 
-          :class="{ active: activeTab === 'Home.vue' }"
-          @click="navigateTo('/', 'Home.vue')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-          Home.vue
+    <!-- ════════ Workbench ════════ -->
+    <div class="workbench">
+      <!-- Activity Bar -->
+      <div class="activity-bar">
+        <div class="activity-top">
+          <button
+            class="activity-icon"
+            :class="{ active: activeView === 'explorer' && isExplorerVisible }"
+            title="Explorer (Ctrl+B)"
+            @click="selectActivity('explorer')"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-7L11 5H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1Z"/></svg>
+          </button>
+          <button class="activity-icon" title="Search (Ctrl+P)" @click="selectActivity('search')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button
+            class="activity-icon"
+            :class="{ active: activeView === 'scm' && isExplorerVisible }"
+            title="Source Control"
+            @click="selectActivity('scm')"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 4-6 1.5-6 6"/></svg>
+          </button>
+          <button
+            class="activity-icon"
+            :class="{ active: activeView === 'run' && isExplorerVisible }"
+            title="Run and Debug"
+            @click="selectActivity('run')"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="m10 8 5 4-5 4Z" fill="currentColor" stroke="none"/></svg>
+          </button>
+          <button
+            class="activity-icon"
+            :class="{ active: activeView === 'ext' && isExplorerVisible }"
+            title="Extensions"
+            @click="selectActivity('ext')"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg>
+          </button>
         </div>
-        <div 
-          class="tab" 
-          :class="{ active: activeTab === 'Projects.vue' }"
-          @click="navigateTo('/projects', 'Projects.vue')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
-          </svg>
-          Projects.vue
-        </div>
-        <div
-          class="tab"
-          :class="{ active: activeTab === 'About.vue' }"
-          @click="navigateTo('/about', 'About.vue')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <circle cx="12" cy="10" r="3"></circle>
-            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
-          </svg>
-          About.vue
-        </div>
-        <div
-          class="tab"
-          :class="{ active: activeTab === 'Gallery.vue' }"
-          @click="navigateTo('/gallery', 'Gallery.vue')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
-          </svg>
-          Gallery.vue
-        </div>
-        <div
-          class="tab"
-          :class="{ active: activeTab === 'Music.vue' }"
-          @click="navigateTo('/music', 'Music.vue')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 18V5l12-2v13"></path>
-            <circle cx="6" cy="18" r="3"></circle>
-            <circle cx="18" cy="16" r="3"></circle>
-          </svg>
-          Music.vue
+        <div class="activity-bottom">
+          <button class="activity-icon" title="Accounts">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          </button>
+          <button class="activity-icon" :title="isDarkMode ? 'Switch to Light theme' : 'Switch to Dark theme'" @click="toggleTheme">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.5M12 19v2.5M21.5 12H19M5 12H2.5m15.6-6.1-1.8 1.8M7.2 16.8l-1.8 1.8m12.7 0-1.8-1.8M7.2 7.2 5.4 5.4"/></svg>
+          </button>
         </div>
       </div>
-      <div class="content-area">
-        <div v-if="isLoading" class="loading-overlay">
-          <div class="loading-spinner">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            </svg>
+
+      <!-- Side Bar — content follows the activity bar selection -->
+      <aside v-show="isExplorerVisible" class="explorer">
+        <div class="explorer-header">
+          <span>{{ sideBarTitle }}</span>
+          <span class="explorer-dots">⋯</span>
+        </div>
+
+        <ScmPanel v-if="activeView === 'scm'" />
+        <RunDebugPanel v-else-if="activeView === 'run'" />
+        <ExtensionsPanel v-else-if="activeView === 'ext'" />
+
+        <div v-else class="explorer-section">
+          <button class="section-title" @click="portfolioExpanded = !portfolioExpanded">
+            <svg class="chevron" :class="{ collapsed: !portfolioExpanded }" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 4l4 4-4 4V4z"/></svg>
+            <span>PORTFOLIO</span>
+          </button>
+          <ul v-show="portfolioExpanded" class="file-tree">
+            <li class="tree-folder">
+              <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 4l4 4-4 4V4z" transform="rotate(90 8 8)"/></svg>
+              <svg class="folder-icon" width="16" height="16" viewBox="0 0 24 24" fill="#dcb67a"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2Z"/></svg>
+              <span>src</span>
+            </li>
+            <li
+              v-for="file in files"
+              :key="file.path"
+              class="tree-file"
+              :class="{ active: route.path === file.path }"
+              @click="openFile(file)"
+            >
+              <svg class="file-icon" viewBox="0 0 256 221" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#41B883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z" />
+                <path fill="#35495E" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z" />
+              </svg>
+              <span>{{ file.name }}</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Editor Region -->
+      <div class="editor-region">
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+          <div class="tabs">
+            <div
+              v-for="file in openTabs"
+              :key="file.path"
+              class="tab"
+              :class="{ active: route.path === file.path }"
+              @click="openFile(file)"
+            >
+              <svg class="file-icon" viewBox="0 0 256 221" width="15" height="15" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#41B883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z" />
+                <path fill="#35495E" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z" />
+              </svg>
+              <span class="tab-name">{{ file.name }}</span>
+              <button class="tab-close" :class="{ locked: openTabs.length === 1 }" @click="closeTab(file, $event)" aria-label="Close">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <button class="editor-action" :class="{ active: isCodeEditorVisible }" title="Toggle source pane (Ctrl+\)" @click="toggleCodeEditor">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16"/></svg>
+            </button>
           </div>
         </div>
-        <router-view v-slot="{ Component }">
-          <component :is="Component" :key="route.path" :isCodeEditorVisible="isCodeEditorVisible" />
-        </router-view>
+
+        <!-- Breadcrumbs -->
+        <div class="breadcrumbs">
+          <span class="crumb">portfolio</span>
+          <span class="crumb-sep">›</span>
+          <span class="crumb">src</span>
+          <span class="crumb-sep">›</span>
+          <svg class="file-icon" viewBox="0 0 256 221" width="13" height="13" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#41B883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z" />
+            <path fill="#35495E" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z" />
+          </svg>
+          <span class="crumb file">{{ activeTab }}</span>
+        </div>
+
+        <!-- Editor Content -->
+        <div class="content-area">
+          <div v-if="isLoading" class="loading-overlay">
+            <div class="loading-spinner">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            </div>
+          </div>
+          <router-view v-slot="{ Component }">
+            <component :is="Component" :key="route.path" :isCodeEditorVisible="isCodeEditorVisible" />
+          </router-view>
+        </div>
+
+        <!-- Terminal Panel -->
+        <TerminalPanel ref="terminal" />
       </div>
     </div>
+
+    <!-- ════════ Status Bar ════════ -->
+    <footer class="status-bar">
+      <div class="status-left">
+        <button class="status-item remote" title="Open a Remote Window">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18-6-6 6-6M15 6l6 6-6 6"/></svg>
+        </button>
+        <button class="status-item" title="Open Source Control" @click="selectActivity('scm')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 4-6 1.5-6 6"/></svg>
+          <span>main</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+        <button
+          class="status-item"
+          title="No problems — open the terminal instead"
+          @click="toggleTerminal()"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+          <span>0</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <span>0</span>
+        </button>
+        <button
+          class="status-item"
+          :class="{ 'is-on': isTerminalVisible }"
+          title="Toggle Terminal (Ctrl+`)"
+          @click="toggleTerminal()"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-5-6-5M12 19h8"/></svg>
+          <span>Terminal</span>
+        </button>
+      </div>
+      <div class="status-right">
+        <button class="status-item">Ln {{ cursorPos.ln }}, Col {{ cursorPos.col }}</button>
+        <button class="status-item">Spaces: 2</button>
+        <button class="status-item">UTF-8</button>
+        <button class="status-item">LF</button>
+        <button class="status-item lang">
+          <svg class="file-icon" viewBox="0 0 256 221" width="13" height="13" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#41B883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z" />
+            <path fill="#35495E" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z" />
+          </svg>
+          <span>Vue</span>
+        </button>
+        <button
+          class="status-item"
+          title="Show notification"
+          @click="notify('You found the bell', 'F1 opens the command palette. Ctrl+P jumps to a file.')"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- ════════ Mobile Nav ════════ -->
+    <nav class="mobile-nav">
+      <button
+        v-for="file in files"
+        :key="file.path"
+        class="mobile-nav-item"
+        :class="{ active: route.path === file.path }"
+        @click="openFile(file)"
+      >
+        <span class="mobile-nav-label">{{ file.name.replace('.vue', '') }}</span>
+      </button>
+      <span class="mobile-nav-divider"></span>
+      <button
+        class="mobile-nav-item"
+        :class="{ active: isTerminalVisible }"
+        aria-label="Toggle terminal"
+        @click="toggleTerminal()"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-5-6-5M12 19h8"/></svg>
+      </button>
+      <button class="mobile-nav-item" aria-label="Toggle theme" @click="toggleTheme">
+        <svg v-if="isDarkMode" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2m20 0h-2"/></svg>
+        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </nav>
   </div>
 </template>
 
 <style scoped>
-.loading-overlay {
+/* ════════ Title Bar ════════ */
+.title-bar {
+  height: 30px;
+  min-height: 30px;
+  background: var(--titlebar-bg);
+  color: var(--titlebar-fg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  user-select: none;
+  position: relative;
+  z-index: 30;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.vscode-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 100%;
+}
+
+/* Menu styling lives in MenuBar.vue */
+
+.title-center {
   position: absolute;
-  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--titlebar-inactive-fg);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.window-controls {
+  display: flex;
+  height: 100%;
+}
+
+.win-btn {
+  width: 46px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--titlebar-fg);
+  cursor: pointer;
+}
+
+.win-btn:hover {
+  background: rgba(128, 128, 128, 0.25);
+}
+
+.win-close:hover {
+  background: #e81123;
+  color: #fff;
+}
+
+/* ════════ Activity Bar ════════ */
+.activity-bar {
+  width: 48px;
+  min-width: 48px;
+  background: var(--activitybar-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  z-index: 20;
+}
+
+.activity-top,
+.activity-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.activity-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--activitybar-fg);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.12s ease;
+}
+
+.activity-icon:hover {
+  color: var(--activitybar-active);
+}
+
+.activity-icon.active {
+  color: var(--activitybar-active);
+}
+
+.activity-icon.active::before {
+  content: '';
+  position: absolute;
   left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
-  background: rgba(248, 248, 252, 0.8);
-  backdrop-filter: blur(2px);
+  width: 2px;
+  background: var(--activitybar-active-border);
+}
+
+/* ════════ Explorer ════════ */
+.explorer {
+  width: 240px;
+  min-width: 240px;
+  background: var(--explorer-bg);
+  color: var(--explorer-fg);
+  font-family: var(--font-ui);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--chrome-border);
+}
+
+.explorer-header {
+  height: 35px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 100;
-  transition: opacity 0.3s ease;
+  justify-content: space-between;
+  padding: 0 16px 0 20px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--explorer-header-fg);
 }
 
-.dark .loading-overlay {
-  background: rgba(47, 45, 54, 0.8);
+.explorer-dots {
+  cursor: pointer;
+  font-size: 14px;
 }
 
-.loading-spinner {
+.section-title {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--accent-color);
+  gap: 2px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--explorer-fg);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 16px 4px 6px;
+  cursor: pointer;
+  text-transform: uppercase;
 }
 
-.loading-spinner svg {
-  animation: spin 1s linear infinite;
+.section-title:hover {
+  color: var(--icon-active);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.chevron {
+  transition: transform 0.12s ease;
+  flex-shrink: 0;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+.chevron.collapsed {
+  transform: rotate(-90deg);
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.file-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-folder,
+.tree-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  height: 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--explorer-fg);
+  position: relative;
+}
+
+.tree-folder {
+  padding-left: 12px;
+}
+
+.tree-file {
+  padding-left: 36px;
+}
+
+.tree-file:hover,
+.tree-folder:hover {
+  background: var(--list-hover-bg);
+}
+
+.tree-file.active {
+  background: var(--list-inactive-bg);
+}
+
+.tree-file.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--focus-blue);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.folder-icon,
+.file-icon {
+  flex-shrink: 0;
+}
+
+/* ════════ Tab Bar ════════ */
+.tab-bar {
+  height: 35px;
+  min-height: 35px;
+  background: var(--tabbar-bg);
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 7px;
+  padding: 0 10px 0 12px;
+  height: 100%;
+  min-width: 120px;
+  max-width: 200px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--tab-inactive-fg);
+  background: var(--tab-inactive-bg);
+  border-right: 1px solid var(--tab-border);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
 }
 
-.tab svg {
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+.tab.active {
+  color: var(--tab-active-fg);
+  background: var(--tab-active-bg);
 }
 
-.tab.active svg {
+.tab.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--tab-active-border-top);
+}
+
+.tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease, background 0.1s ease;
+  flex-shrink: 0;
+}
+
+.tab:hover .tab-close,
+.tab.active .tab-close {
+  opacity: 0.8;
+}
+
+.tab-close:hover {
+  background: rgba(128, 128, 128, 0.3);
   opacity: 1;
 }
 
-/* ── Mobile floating nav ── */
+.tab-close.locked {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.editor-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--icon-color);
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.editor-action:hover {
+  background: var(--list-hover-bg);
+  color: var(--icon-active);
+}
+
+.editor-action.active {
+  color: var(--focus-blue);
+}
+
+/* ════════ Breadcrumbs ════════ */
+.breadcrumbs {
+  height: 22px;
+  min-height: 22px;
+  background: var(--breadcrumb-bg);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 16px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--breadcrumb-fg);
+  border-bottom: 1px solid var(--chrome-border);
+}
+
+.crumb {
+  cursor: default;
+}
+
+.crumb.file {
+  color: var(--breadcrumb-fg);
+}
+
+.crumb-sep {
+  opacity: 0.6;
+}
+
+/* ════════ Loading ════════ */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.loading-spinner {
+  color: var(--focus-blue);
+}
+
+.loading-spinner svg {
+  animation: spin 0.8s linear infinite;
+}
+
+/* ════════ Status Bar ════════ */
+.status-bar {
+  height: 22px;
+  min-height: 22px;
+  background: var(--statusbar-bg);
+  color: var(--statusbar-fg);
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  z-index: 30;
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: stretch;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  color: var(--statusbar-fg);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.status-item:hover {
+  background: var(--statusbar-hover);
+}
+
+.status-item.remote {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.status-item.remote:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.status-item.is-on {
+  background: var(--statusbar-hover);
+}
+
+/* ════════ Mobile Nav ════════ */
 .mobile-nav {
   display: none;
 }
 
-.mobile-nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--icon-color);
-  cursor: pointer;
-  position: relative;
-  transition: color 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.mobile-nav-item::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--accent-color);
-  opacity: 0;
-  transform: scale(0.6);
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.mobile-nav-item.active {
-  color: var(--accent-color);
-}
-
-.mobile-nav-item.active::before {
-  opacity: 0.13;
-  transform: scale(1);
-}
-
-.mobile-nav-item:active {
-  transform: scale(0.88);
-}
-
-.mobile-nav-item svg {
-  position: relative;
-  z-index: 1;
-}
-
-.mobile-nav-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border-color);
-  margin: 0 2px;
-  opacity: 0.8;
-}
-
 @media (max-width: 768px) {
-  .tab svg {
+  .title-center,
+  .window-controls,
+  .activity-bar,
+  .explorer,
+  .breadcrumbs {
     display: none;
   }
 
   .tab-bar {
-    display: none;
+    overflow-x: auto;
   }
 
-  .toggle-editor-btn {
-    display: none;
-  }
-
-  .sidebar {
+  .editor-actions {
     display: none;
   }
 
   .mobile-nav {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     position: fixed;
-    bottom: 24px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    padding: 8px 12px;
-    border-radius: 32px;
-
-    /* Liquid glass */
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.65);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.10),
-      0 2px 8px rgba(0, 0, 0, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    padding: 6px 8px;
+    border-radius: 12px;
+    background: var(--titlebar-bg);
+    border: 1px solid var(--chrome-border);
+    box-shadow: var(--shadow-heavy);
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .dark .mobile-nav {
-    background: rgba(18, 16, 28, 0.72);
-    border-color: rgba(255, 255, 255, 0.09);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.45),
-      0 2px 8px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  .mobile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--titlebar-fg);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .mobile-nav-item.active {
+    background: var(--btn-primary-bg);
+    color: #fff;
+  }
+
+  .mobile-nav-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--chrome-border);
+    margin: 0 2px;
   }
 
   :deep(.preview) {
-    padding-bottom: 96px;
+    padding-bottom: 90px;
   }
 }
 </style>

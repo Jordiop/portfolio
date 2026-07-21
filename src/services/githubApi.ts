@@ -8,6 +8,7 @@
 import type {
   GitHubUser,
   GitHubRepo,
+  GitHubCommit,
   GitHubAPIResponse,
   RateLimitInfo,
   GitHubError
@@ -113,6 +114,18 @@ export async function fetchRepo(
 ): Promise<GitHubAPIResponse<GitHubRepo>> {
   const url = API_ENDPOINTS.repo(owner, repo)
   return fetchWithTimeout<GitHubRepo>(url)
+}
+
+/**
+ * Fetch the most recent commits for a repository
+ */
+export async function fetchRepoCommits(
+  owner: string,
+  repo: string,
+  perPage = 8
+): Promise<GitHubAPIResponse<GitHubCommit[]>> {
+  const url = API_ENDPOINTS.repoCommits(owner, repo, perPage)
+  return fetchWithTimeout<GitHubCommit[]>(url)
 }
 
 /**

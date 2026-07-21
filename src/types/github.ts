@@ -48,6 +48,24 @@ export interface GitHubRepo {
   archived: boolean
 }
 
+// Commit from the repo commits endpoint
+export interface GitHubCommit {
+  sha: string
+  html_url: string
+  commit: {
+    message: string
+    author: {
+      name: string
+      email: string
+      date: string
+    }
+  }
+  author: {
+    login: string
+    avatar_url: string
+  } | null
+}
+
 // Aggregated User Statistics
 export interface GitHubStats {
   totalRepos: number

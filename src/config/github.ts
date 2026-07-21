@@ -16,18 +16,22 @@ export const API_REQUEST_TIMEOUT = 10000 // 10 seconds
 export const CACHE_TTL_USER_PROFILE = 60 * 60 * 1000 // 1 hour
 export const CACHE_TTL_USER_STATS = 15 * 60 * 1000 // 15 minutes
 export const CACHE_TTL_REPO = 30 * 60 * 1000 // 30 minutes
+export const CACHE_TTL_COMMITS = 10 * 60 * 1000 // 10 minutes
 
 // Cache key prefixes
 export const CACHE_KEY_PREFIX = 'github_cache'
 export const CACHE_KEY_USER_PROFILE = `${CACHE_KEY_PREFIX}_user`
 export const CACHE_KEY_USER_STATS = `${CACHE_KEY_PREFIX}_stats`
 export const CACHE_KEY_REPO = `${CACHE_KEY_PREFIX}_repo`
+export const CACHE_KEY_COMMITS = `${CACHE_KEY_PREFIX}_commits`
 
 // API Endpoints
 export const API_ENDPOINTS = {
   user: (username: string) => `${GITHUB_API_BASE}/users/${username}`,
   userRepos: (username: string) => `${GITHUB_API_BASE}/users/${username}/repos?per_page=100&sort=updated`,
-  repo: (owner: string, repo: string) => `${GITHUB_API_BASE}/repos/${owner}/${repo}`
+  repo: (owner: string, repo: string) => `${GITHUB_API_BASE}/repos/${owner}/${repo}`,
+  repoCommits: (owner: string, repo: string, perPage = 8) =>
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits?per_page=${perPage}`
 }
 
 // Rate limit thresholds
@@ -113,6 +117,13 @@ export function getUserProfileCacheKey(username: string): string {
  */
 export function getUserStatsCacheKey(username: string): string {
   return `${CACHE_KEY_USER_STATS}_${username}`
+}
+
+/**
+ * Get cache key for a repository's commit list
+ */
+export function getCommitsCacheKey(owner: string, repo: string): string {
+  return `${CACHE_KEY_COMMITS}_${owner}_${repo}`
 }
 
 /**
